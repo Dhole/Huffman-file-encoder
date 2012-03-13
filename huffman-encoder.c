@@ -486,7 +486,7 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
 int decode (char *inputfilevalue, char *outpufilevalue) {
   unsigned long i;
   unsigned long j;
-  printf("  Dencoding\n");
+  printf("  Decoding\n");
   printf("-Opening file %s\n", inputfilevalue);
   
   FILE *inputfile = fopen(inputfilevalue,"rb");
@@ -495,6 +495,31 @@ int decode (char *inputfilevalue, char *outpufilevalue) {
     return 2;
   }
   
+  char filetype[] = ".huf1.0";
+  
+  unsigned char *bufferheader;
+  bufferheader = malloc(1);
+  
+  fread(bufferheader ,7 ,1 , inputfile);
+  
+  for (i = 0; i < 4; i++) {
+    if (filetype[i] != bufferheader[i])
+        break;
+  }
+  if (i != 4) {
+    printf("File %s is not a valid huffman file\n", inputfilevalue);
+    return 2;
+  }
+  printf("-Huffman file %s is version %c%c%c\n", inputfilevalue, bufferheader[4], bufferheader[5], bufferheader[6]);
+  /*
+  for (i = 0; i < nsymbols; i++)
+    fwrite(&order[i] ,1 ,1 ,outputfile);
+    
+  for (i = 0; i < (nsymbols - 1) * 2; i++)
+    fwrite(&tree[i], 1, 1, outputfile);
+    */
+  
+  fclose(inputfile);
   
   return 0;
 }
