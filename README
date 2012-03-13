@@ -1,0 +1,12 @@
+Huffman File Encoder
+
+Work In Progress
+
+This is a program that encodes binary data of a file using Huffman encoding. It also provides a decoder.
+
+Current State: 
+- The encoder is working for input symbols of 1 byte.
+
+TODO:
+- Write the decoder
+
