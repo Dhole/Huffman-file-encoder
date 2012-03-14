@@ -201,7 +201,7 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
   //for (i = 0; i < nsymbols; i++)
   //  probs[i] = probs2[i];
   
-  unsigned int tree[(nsymbols - 1) * 2];
+  unsigned long tree[(nsymbols - 1) * 2];
   unsigned long indexes[nsymbols];
   for (i = 0; i < nsymbols; i++)
     indexes[i] = i;
@@ -391,14 +391,14 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
   for (i = 0; i < nsymbols; i++)
     codefinal[i] = codeh[indexes[i]];
 //Show final codes
-/*  
+  
   for (i = 0; i < nsymbols; i++) {
     printf("%lu - ",i);
     for (j = 0; j < codefinal[i].length; j++)
       printf("%i",codefinal[i].value[j]);
     printf("\n");
   }
-*/
+
 /*  for (i = 0; i < (nsymbols - 1); i++)
     printf("(%u %u) ", tree[i * 2], tree[(i * 2) + 1]);*/
   
@@ -442,11 +442,16 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
     
   fwrite(&lengthvalue ,1 ,1 ,outputfile);
   
+  /*for (i = 0; i < nsymbols; i++)
+    printf("%lu\n", order[i]);*/
+  /*for (i = 0; i < (nsymbols - 1) * 2; i++)
+    printf("%lu\n", tree[i]);*/
+  
   for (i = 0; i < nsymbols; i++)
-    fwrite(&order[i] ,1 ,1 ,outputfile);
+    fwrite(&order[i], sizeof(unsigned long) ,1 ,outputfile);
     
   for (i = 0; i < (nsymbols - 1) * 2; i++)
-    fwrite(&tree[i], 1, 1, outputfile);
+    fwrite(&tree[i], sizeof(unsigned long), 1, outputfile);
   
   
   for (i = 0; i < filesize/lengthvalue; i++) {
@@ -498,7 +503,9 @@ int decode (char *inputfilevalue, char *outpufilevalue) {
   char filetype[] = ".huf1.0";
   
   unsigned char *bufferheader;
-  bufferheader = malloc(1);
+  bufferheader = malloc(7);
+  unsigned char *buffer;
+  //buffer = malloc()
   
   fread(bufferheader ,7 ,1 , inputfile);
   
@@ -511,6 +518,62 @@ int decode (char *inputfilevalue, char *outpufilevalue) {
     return 2;
   }
   printf("-Huffman file %s is version %c%c%c\n", inputfilevalue, bufferheader[4], bufferheader[5], bufferheader[6]);
+  
+  unsigned char lengthvalue;
+  fread(&lengthvalue, 1, 1, inputfile);
+  printf("-Length = %u\n", lengthvalue);
+  
+  unsigned long nsymbols = powint(2,8*lengthvalue);
+  unsigned long order[nsymbols];
+  unsigned long tree[(nsymbols - 1) * 2];
+  
+  printf("-Number of symbols: %lu\n", nsymbols);
+  
+  fread(order, nsymbols, sizeof(unsigned long), inputfile);
+  fread(tree, (nsymbols - 1) * 2, sizeof(unsigned long), inputfile);
+  
+  /*for (i = 0; i < nsymbols; i++)
+    printf("%lu\n", order[i]);*/
+  /*for (i = 0; i < (nsymbols - 1) * 2; i++)
+    printf("%lu\n", tree[i]);*/
+    
+  code codeh[nsymbols*2];
+  for (i = 0; i < nsymbols; i++)
+    codeh[i].length = 0;
+  
+  for (i = 0; i < nsymbols; i++)
+    codeh[i].children.length = 0;
+  
+  unsigned int parent;
+  for (i = 0; i < (nsymbols - 1); i++) {
+    parent = tree[i * 2];
+    fill(0, codeh, parent);
+    parent = tree[(i * 2) +1 ];
+    fill(1, codeh, parent);
+	codeh[tree[i * 2]].children.value[codeh[tree[i * 2]].children.length] = tree[(i * 2) + 1];
+	codeh[tree[i * 2]].children.length++;
+  }
+  
+  unsigned long ordercopy[nsymbols];
+  for (i = 0; i < nsymbols; i++)
+    ordercopy[i] = order[i];
+  
+  unsigned long indexes[nsymbols];
+  for (i = 0; i < nsymbols; i++)
+    indexes[i] = i;
+  bubbleSortR(ordercopy, indexes, nsymbols);
+ 
+  code codefinal[nsymbols];
+  for (i = 0; i < nsymbols; i++)
+    codefinal[i] = codeh[indexes[i]];
+    
+  for (i = 0; i < nsymbols; i++) {
+    printf("%lu - ",i);
+    for (j = 0; j < codefinal[i].length; j++)
+      printf("%i",codefinal[i].value[j]);
+  printf("\n");
+  }
+  
   /*
   for (i = 0; i < nsymbols; i++)
     fwrite(&order[i] ,1 ,1 ,outputfile);
@@ -519,6 +582,7 @@ int decode (char *inputfilevalue, char *outpufilevalue) {
     fwrite(&tree[i], 1, 1, outputfile);
     */
   
+  free(bufferheader);
   fclose(inputfile);
   
   return 0;
