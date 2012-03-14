@@ -392,12 +392,12 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
     codefinal[i] = codeh[indexes[i]];
 //Show final codes
   
-  for (i = 0; i < nsymbols; i++) {
+  /*for (i = 0; i < nsymbols; i++) {
     printf("%lu - ",i);
     for (j = 0; j < codefinal[i].length; j++)
       printf("%i",codefinal[i].value[j]);
     printf("\n");
-  }
+  }*/
 
 /*  for (i = 0; i < (nsymbols - 1); i++)
     printf("(%u %u) ", tree[i * 2], tree[(i * 2) + 1]);*/
@@ -567,12 +567,12 @@ int decode (char *inputfilevalue, char *outpufilevalue) {
   for (i = 0; i < nsymbols; i++)
     codefinal[i] = codeh[indexes[i]];
     
-  for (i = 0; i < nsymbols; i++) {
+  /*for (i = 0; i < nsymbols; i++) {
     printf("%lu - ",i);
     for (j = 0; j < codefinal[i].length; j++)
       printf("%i",codefinal[i].value[j]);
   printf("\n");
-  }
+  }*/
   
   /*
   for (i = 0; i < nsymbols; i++)
