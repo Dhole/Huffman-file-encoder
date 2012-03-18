@@ -399,12 +399,12 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
   }  
 //Show final codes
   
-  for (i = 0; i < nsymbols; i++) {
+  /*for (i = 0; i < nsymbols; i++) {
     printf("%lu - ",i);
     for (j = 0; j < codefinal[i].length; j++)
       printf("%i",codefinal[i].value[j]);
     printf("\n");
-  }
+  }*/
 
 /*  for (i = 0; i < (nsymbols - 1); i++)
     printf("(%u %u) ", tree[i * 2], tree[(i * 2) + 1]);*/
@@ -443,8 +443,9 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
   }
   
   //Headers of file
-  char filetype[] = ".huf1.0";
-  for (i = 0; i < 7; i++)
+  //X will be the number of bits added to create the last byte
+  char filetype[] = ".huf1.0X";
+  for (i = 0; i < 8; i++)
     fwrite(&filetype[i] ,1 ,1 ,outputfile);
     
   fwrite(&lengthvalue ,1 ,1 ,outputfile);
@@ -463,6 +464,8 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
   
   for (i = 0; i < filesize/lengthvalue; i++) {
     fread(buffer, lengthvalue, 1, inputfile);
+    //if ( i > filesize/lengthvalue - 10)
+    //  printf("%2X ", buffer[0]);
     currentsymbol = 0;
     for (j = 0; j < lengthvalue; j++){
       currentsymbol += buffer[j]*powint(2,8*(lengthvalue - 1 - j));
@@ -471,24 +474,24 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
     //  printf("%X ",currentsymbol);
     for (j = 0; j < codefinal[currentsymbol].length; j++)
       binarybuffer[binarybuffersize+j] = codefinal[currentsymbol].value[j];
-    //if (i < 10){
-    //  for (j = 0; j < codefinal[currentsymbol].length; j++)
-    //    printf("%u",codefinal[currentsymbol].value[j]); 
-    //  printf(" ");}
+    /*if (i < 10){
+      for (j = 0; j < codefinal[currentsymbol].length; j++)
+        printf("%u",codefinal[currentsymbol].value[j]); 
+      printf(" ");}*/
     binarybuffersize += codefinal[currentsymbol].length;
     
-    if (i < 10){
+    /*if (i < 10){
       for (j = 0; j < binarybuffersize; j++)
         printf("%u", binarybuffer[j]);
       printf("\n");
-    }
+    }*/
     
     while (binarybuffersize >= lengthvalue*8){
       *outbuffer = 0;
       for (j = 0; j < lengthvalue*8; j++)
         *outbuffer += binarybuffer[lengthvalue*8-1 - j] * powint(2,j);
-      if (i < 10)
-        printf("%X ", outbuffer[0]);
+      //if (i < 10)
+      //  printf("%X ", outbuffer[0]);
       fwrite(outbuffer ,lengthvalue ,1 ,outputfile);
       
       for (j = 0; j < binarybuffersize - lengthvalue*8; j++)
@@ -496,6 +499,18 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
       binarybuffersize -= lengthvalue*8;
     }
   }
+  unsigned char filled = lengthvalue*8 - binarybuffersize;
+  *outbuffer = 0;
+  for (j = 0; j < lengthvalue*8; j++)
+    *outbuffer += binarybuffer[lengthvalue*8-1 - j] * powint(2,j);
+  //if (i < 10)
+  //  printf("%X ", outbuffer[0]);
+  fwrite(outbuffer ,lengthvalue ,1 ,outputfile);
+  
+  fseek(outputfile, 7 * lengthvalue, SEEK_SET);
+  fwrite(&filled, 1, 1, outputfile);
+
+
   
   free(probs);
   free(buffer);
@@ -527,6 +542,9 @@ int decode (char *inputfilevalue, char *outputfilevalue) {
   bufferheader = malloc(7);
   
   fread(bufferheader ,7 ,1 , inputfile);
+  unsigned char filled;
+  fread(&filled, 1, 1, inputfile);
+  //printf("%u -", filled);
   
   for (i = 0; i < 4; i++) {
     if (filetype[i] != bufferheader[i])
@@ -618,7 +636,7 @@ int decode (char *inputfilevalue, char *outputfilevalue) {
   i = (unsigned long) ftell(inputfile);
   unsigned long filesize = getfilesize(inputfilevalue);
   
-  while (1) {
+  while (!feof(inputfile)) {
     while (binarybuffersize < nsymbols && !feof(inputfile)){
       fread(&buffer, 1, 1, inputfile);
       //printf("%u (%X) ",buffer,ftell(inputfile));
@@ -629,7 +647,9 @@ int decode (char *inputfilevalue, char *outputfilevalue) {
       }
       binarybuffersize += 8*lengthvalue;
     }
-    
+   
+    if(feof(inputfile))
+      binarybuffersize -= filled+lengthvalue*8;
     //for (j = 0; j < binarybuffersize; j++)
     //  printf("%u", binarybuffer[j]);
     //printf("\n");
@@ -653,8 +673,6 @@ int decode (char *inputfilevalue, char *outputfilevalue) {
         }
       }
     }
-    if (feof(inputfile))
-      break;
   }
   while (binarybuffersize > 0){  
     for (j = 0; j < nsymbols; j++) {
