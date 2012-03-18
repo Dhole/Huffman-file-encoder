@@ -6,10 +6,10 @@ This is a program that encodes binary data of a file using Huffman encoding. It 
 
 Current State: 
 - The encoder is working for input symbols of 1 byte.
-- The decoder is partially working (The encoder adds trash at the end of the file, so the decoder decodes the trash, ending with a larger file)
+- The decoder is working for files created with the encoder (but it's quite slow decoding).
 
 TODO:
-- Encode files without trash
+- Increace efficiency (specially the decoder)
 - Clean code
 - Delete commented code
 - Comment code
