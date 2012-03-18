@@ -386,18 +386,25 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
       printf("%i",codeh[indexes[i]].value[j]);
   printf("\n-----\n");
 */  
+  code codefinalre[nsymbols];
   code codefinal[nsymbols];
   
+  
   for (i = 0; i < nsymbols; i++)
-    codefinal[i] = codeh[indexes[i]];
+    codefinalre[i] = codeh[indexes[i]];
+  for (i = 0; i < nsymbols; i++){
+    for (j = 0; j < codefinalre[i].length; j++)
+      codefinal[i].value[j] = codefinalre[i].value[codefinalre[i].length - 1 - j];
+    codefinal[i].length = codefinalre[i].length;
+  }  
 //Show final codes
   
-  /*for (i = 0; i < nsymbols; i++) {
+  for (i = 0; i < nsymbols; i++) {
     printf("%lu - ",i);
     for (j = 0; j < codefinal[i].length; j++)
       printf("%i",codefinal[i].value[j]);
     printf("\n");
-  }*/
+  }
 
 /*  for (i = 0; i < (nsymbols - 1); i++)
     printf("(%u %u) ", tree[i * 2], tree[(i * 2) + 1]);*/
@@ -460,13 +467,28 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
     for (j = 0; j < lengthvalue; j++){
       currentsymbol += buffer[j]*powint(2,8*(lengthvalue - 1 - j));
     }
+    //if (i < 10)
+    //  printf("%X ",currentsymbol);
     for (j = 0; j < codefinal[currentsymbol].length; j++)
       binarybuffer[binarybuffersize+j] = codefinal[currentsymbol].value[j];
+    //if (i < 10){
+    //  for (j = 0; j < codefinal[currentsymbol].length; j++)
+    //    printf("%u",codefinal[currentsymbol].value[j]); 
+    //  printf(" ");}
     binarybuffersize += codefinal[currentsymbol].length;
     
-    while (binarybuffersize > lengthvalue*8 - 1){
+    if (i < 10){
+      for (j = 0; j < binarybuffersize; j++)
+        printf("%u", binarybuffer[j]);
+      printf("\n");
+    }
+    
+    while (binarybuffersize >= lengthvalue*8){
+      *outbuffer = 0;
       for (j = 0; j < lengthvalue*8; j++)
-        *outbuffer += binarybuffer[j] * powint(2,j);
+        *outbuffer += binarybuffer[lengthvalue*8-1 - j] * powint(2,j);
+      if (i < 10)
+        printf("%X ", outbuffer[0]);
       fwrite(outbuffer ,lengthvalue ,1 ,outputfile);
       
       for (j = 0; j < binarybuffersize - lengthvalue*8; j++)
@@ -488,9 +510,8 @@ int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthval
   return 0;
 }
 
-int decode (char *inputfilevalue, char *outpufilevalue) {
-  unsigned long i;
-  unsigned long j;
+int decode (char *inputfilevalue, char *outputfilevalue) {
+  unsigned long i, j, k;
   printf("  Decoding\n");
   printf("-Opening file %s\n", inputfilevalue);
   
@@ -504,8 +525,6 @@ int decode (char *inputfilevalue, char *outpufilevalue) {
   
   unsigned char *bufferheader;
   bufferheader = malloc(7);
-  unsigned char *buffer;
-  //buffer = malloc()
   
   fread(bufferheader ,7 ,1 , inputfile);
   
@@ -528,7 +547,7 @@ int decode (char *inputfilevalue, char *outpufilevalue) {
   unsigned long tree[(nsymbols - 1) * 2];
   
   printf("-Number of symbols: %lu\n", nsymbols);
-  
+
   fread(order, nsymbols, sizeof(unsigned long), inputfile);
   fread(tree, (nsymbols - 1) * 2, sizeof(unsigned long), inputfile);
   
@@ -562,10 +581,18 @@ int decode (char *inputfilevalue, char *outpufilevalue) {
   for (i = 0; i < nsymbols; i++)
     indexes[i] = i;
   bubbleSortR(ordercopy, indexes, nsymbols);
- 
+    
+  code codefinalre[nsymbols];
   code codefinal[nsymbols];
+  
+  
   for (i = 0; i < nsymbols; i++)
-    codefinal[i] = codeh[indexes[i]];
+    codefinalre[i] = codeh[indexes[i]];
+  for (i = 0; i < nsymbols; i++){
+    for (j = 0; j < codefinalre[i].length; j++)
+      codefinal[i].value[j] = codefinalre[i].value[codefinalre[i].length - 1 - j];
+    codefinal[i].length = codefinalre[i].length;
+  }
     
   /*for (i = 0; i < nsymbols; i++) {
     printf("%lu - ",i);
@@ -574,16 +601,110 @@ int decode (char *inputfilevalue, char *outpufilevalue) {
   printf("\n");
   }*/
   
-  /*
-  for (i = 0; i < nsymbols; i++)
-    fwrite(&order[i] ,1 ,1 ,outputfile);
-    
-  for (i = 0; i < (nsymbols - 1) * 2; i++)
-    fwrite(&tree[i], 1, 1, outputfile);
-    */
+  //unsigned char *buffer;
+  //buffer = malloc(nsymbols*2/8);
+  //unsigned long buffersize = 0;
   
+  FILE *outputfile = fopen(outputfilevalue,"wb");
+  if (!outputfile) {
+    printf("Error with output file %s\n", outputfilevalue);
+    return 3;
+  }
+  unsigned char buffer = 0;
+
+  unsigned char binarybuffer[nsymbols*2];
+  int binarybuffersize = 0;
+  
+  i = (unsigned long) ftell(inputfile);
+  unsigned long filesize = getfilesize(inputfilevalue);
+  
+  while (1) {
+    while (binarybuffersize < nsymbols && !feof(inputfile)){
+      fread(&buffer, 1, 1, inputfile);
+      //printf("%u (%X) ",buffer,ftell(inputfile));
+      for (j = 0; j < 8*lengthvalue; j++) {
+        binarybuffer[binarybuffersize-j+8*lengthvalue-1] = buffer%2;
+        //printf("%u",buffer%2);
+        buffer = buffer/2; 
+      }
+      binarybuffersize += 8*lengthvalue;
+    }
+    
+    //for (j = 0; j < binarybuffersize; j++)
+    //  printf("%u", binarybuffer[j]);
+    //printf("\n");
+    
+    if ( binarybuffersize > 0){
+      for (j = 0; j < nsymbols; j++) {
+        for (k = 0; k < codefinal[j].length; k++){ // <--
+          if (codefinal[j].value[k] != binarybuffer[k])
+            break;
+        }
+        
+        if (codefinal[j].length == k) {
+          //printf(">%lu ",j);
+          fwrite(&j,lengthvalue,1,outputfile);
+          //for (k=codefinal[j].length; k < nsymbols*2; k++)
+          //  binarybuffer[k-codefinal[j].length-2] = binarybuffer[k];
+          for (k = 0; k < nsymbols*2-codefinal[j].length; k++)
+            binarybuffer[k] = binarybuffer[k+codefinal[j].length];
+          binarybuffersize -= codefinal[j].length;
+          break;
+        }
+      }
+    }
+    if (feof(inputfile))
+      break;
+  }
+  while (binarybuffersize > 0){  
+    for (j = 0; j < nsymbols; j++) {
+      for (k = 0; k < codefinal[j].length; k++){ // <--
+        if (codefinal[j].value[k] != binarybuffer[k])
+          break;
+      }
+      
+      if (codefinal[j].length == k) {
+        //printf(">%lu ",j);
+        fwrite(&j,lengthvalue,1,outputfile);
+        //for (k=codefinal[j].length; k < nsymbols*2; k++)
+        //  binarybuffer[k-codefinal[j].length-2] = binarybuffer[k];
+        for (k = 0; k < nsymbols*2-codefinal[j].length; k++)
+          binarybuffer[k] = binarybuffer[k+codefinal[j].length];
+        binarybuffersize -= codefinal[j].length;
+        break;
+      }
+    }
+  }
+  
+/*
+  while (binarybuffersize =< nsymbols*2-8*length){
+    fread(buffer, nsymbols - buffersize, 1, inputfile);
+  
+  for (i = i; i < filesize/lengthvalue; i++) {
+    
+    fread(buffer, nsymbols - buffersize, 1, inputfile);
+    currentsymbol = 0;
+    for (j = 0; j < lengthvalue; j++){
+      currentsymbol += buffer[j]*powint(2,8*(lengthvalue - 1 - j));
+    }
+    for (j = 0; j < codefinal[currentsymbol].length; j++)
+      binarybuffer[binarybuffersize+j] = codefinal[currentsymbol].value[j];
+    binarybuffersize += codefinal[currentsymbol].length;
+    
+    while (binarybuffersize > lengthvalue*8 - 1){
+      for (j = 0; j < lengthvalue*8; j++)
+        *outbuffer += binarybuffer[j] * powint(2,j);
+      fwrite(outbuffer ,lengthvalue ,1 ,outputfile);
+      
+      for (j = 0; j < binarybuffersize - lengthvalue*8; j++)
+        binarybuffer[j] = binarybuffer[j+lengthvalue*8];
+      binarybuffersize -= lengthvalue*8;
+    }
+  }
+*/  
   free(bufferheader);
   fclose(inputfile);
+  fclose(outputfile);
   
   return 0;
 }
