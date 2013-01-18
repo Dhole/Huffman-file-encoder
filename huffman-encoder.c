@@ -17,787 +17,563 @@ typedef struct {
 } code;
 
 
-	
 
-unsigned long powint (int base, int exponent) {
-  int i;
-  unsigned long result = 1;
-  for (i = 0; i < exponent; i++)
-    result = result*base; 
-  return result;
+unsigned long powInt(int base, int exp)
+{
+	int res;
+	for (; exp > 0; exp--)
+		res = res*base;
+
+ 	return res;
 }
 
 void bubbleSort2(unsigned long numbers[], unsigned long indexes[], unsigned int order[],  int array_size)
 {
-  int i, j, temp;
+	int i, j, temp;
 
-  for (i = (array_size - 1); i > 0; i--)
-  {
-    for (j = 1; j <= i; j++)
-    {
-      if (numbers[j-1] < numbers[j])
-      {
-        temp = numbers[j-1];
-        numbers[j-1] = numbers[j];
-        numbers[j] = temp;
-        
-        temp = indexes[j-1];
-        indexes[j-1] = indexes[j];
-        indexes[j] = temp;
-        
-        temp = order[j-1];
-        order[j-1] = order[j];
-        order[j] = temp;
-      }
-    }
-  }
+	for (i = (array_size - 1); i > 0; i--)
+	{
+		for (j = 1; j <= i; j++)
+		{
+			if (numbers[j-1] < numbers[j])
+			{
+				temp = numbers[j-1];
+				numbers[j-1] = numbers[j];
+				numbers[j] = temp;
+
+				temp = indexes[j-1];
+				indexes[j-1] = indexes[j];
+				indexes[j] = temp;
+
+				temp = order[j-1];
+				order[j-1] = order[j];
+				order[j] = temp;
+			}
+		}
+	}
 }
 
 void bubbleSort(unsigned long numbers[], unsigned long indexes[], int array_size)
 {
-  int i, j, temp;
+	int i, j, temp;
 
-  for (i = (array_size - 1); i > 0; i--)
-  {
-    for (j = 1; j <= i; j++)
-    {
-      if (numbers[j-1] < numbers[j])
-      {
-        temp = numbers[j-1];
-        numbers[j-1] = numbers[j];
-        numbers[j] = temp;
-        
-        temp = indexes[j-1];
-        indexes[j-1] = indexes[j];
-        indexes[j] = temp;
-      }
-    }
-  }
+	for (i = (array_size - 1); i > 0; i--) {
+		for (j = 1; j <= i; j++) {
+			if (numbers[j-1] < numbers[j]) {
+				temp = numbers[j-1];
+				numbers[j-1] = numbers[j];
+				numbers[j] = temp;
+
+				temp = indexes[j-1];
+				indexes[j-1] = indexes[j];
+				indexes[j] = temp;
+			}
+		}
+	}
 }
 
 void bubbleSortR(unsigned long numbers[], unsigned long indexes[], int array_size)
 {
-  int i, j, temp;
+	int i, j, temp;
 
-  for (i = (array_size - 1); i > 0; i--)
-  {
-    for (j = 1; j <= i; j++)
-    {
-      if (numbers[j-1] > numbers[j])
-      {
-        temp = numbers[j-1];
-        numbers[j-1] = numbers[j];
-        numbers[j] = temp;
-        
-        temp = indexes[j-1];
-        indexes[j-1] = indexes[j];
-        indexes[j] = temp;
-      }
-    }
-  }
+	for (i = (array_size - 1); i > 0; i--) {
+		for (j = 1; j <= i; j++) {
+			if (numbers[j-1] > numbers[j]) {
+				temp = numbers[j-1];
+				numbers[j-1] = numbers[j];
+				numbers[j] = temp;
+
+				temp = indexes[j-1];
+				indexes[j-1] = indexes[j];
+				indexes[j] = temp;
+			}
+		}
+	}
 }
 
-int showhelp () {
-  printf("Huffman encoder (March 2012). Usage:\n"
-  "huffman-encoder [-e/-d] [-i inputfile] [-o outpufile]\n"
-  "  -e  encode\n"
-  "  -d  decode\n"
-  "  -d  lenght (1 if omitted)\n"
-  "  -h  help\n"
-  "Limitations: Max file size = 4GiB\n");
-  return 0;
+int showHelp(char program_name[])
+{
+	printf("Huffman encoder (March 2012). \n\n"
+			"Usage: %s [-e/-d] [-i inputfile] [-o outpufile]\n"
+			"  -e  encode\n"
+			"  -d  decode\n"
+			"  -l  lenght (1 if omitted)\n"
+			"  -h  help\n"
+			"\nLimitations: Max file size = 4GiB\n", program_name);
+	return 0;
 }
 
-unsigned long getfilesize (char *filename) {
-  struct stat st;
-  stat(filename, &st);
-  return st.st_size;
+unsigned long getFileSize(char *filename)
+{
+	struct stat st;
+	stat(filename, &st);
+	return st.st_size;
 }
 
-/*int fill (unsigned char value, unsigned char **code, unsigned long codelength[], unsigned int **children, unsigned int childrenlength[], unsigned long parent) {
-  //printf("OK\n");
-  //printf("%lu\n",parent);
-  //printf("%lu\n",codelength[parent]);
-  //printf("%u\n",code[6][0]);
-  code[parent][codelength[parent]] = value;
-  codelength[parent]++;
-  unsigned int currentchildrenlength = childrenlength[parent];
-  while ( currentchildrenlength > 0 ) {
-    fill(value, code, codelength, children, childrenlength, children[parent][currentchildrenlength]);
-    currentchildrenlength--;
-  } 
-}*/
-
-int fill (unsigned char value, code codeh[], unsigned long parent) {
-  //printf("OK\n");
-  //printf("%lu\n",parent);
-  //printf("%lu\n",codelength[parent]);
-  //printf("%u\n",code[6][0]);
-  codeh[parent].value[codeh[parent].length] = value;
-  //printf("%lu - %u\n", parent, value);
-  codeh[parent].length++;
-  unsigned int currentchildrenlength = codeh[parent].children.length;
-  while ( currentchildrenlength != 0 ) {
-    fill(value, codeh, codeh[parent].children.value[currentchildrenlength-1]);
-    currentchildrenlength--;
-  } 
+int fill(unsigned char value, code codeh[], unsigned long parent)
+{
+	codeh[parent].value[codeh[parent].length] = value;
+	codeh[parent].length++;
+	unsigned int currentchildrenlength = codeh[parent].children.length;
+	while ( currentchildrenlength != 0 ) {
+		fill(value, codeh, codeh[parent].children.value[currentchildrenlength-1]);
+		currentchildrenlength--;
+	}
 }
 
-int encode (char *inputfilevalue, char *outputfilevalue, unsigned char lengthvalue) {
-  unsigned long i;
-  unsigned long j;
-  printf("  Encoding\n");
-  printf("-Opening file %s\n", inputfilevalue);
-  
-  FILE *inputfile = fopen(inputfilevalue,"rb");
-  if (!inputfile){
-    printf("File %s doesn't exist\n", inputfilevalue);
-    return 2;
-  }
-  
-  unsigned long filesize = getfilesize(inputfilevalue);
-  printf("-File size: %lu bytes\n", filesize);
-  
-  unsigned long nsymbols = powint(2,8*lengthvalue);
-  unsigned long currentsymbol = 0;
-  
-  //unsigned char buffer[lengthvalue];
-  
-  unsigned char *buffer;
-  buffer = malloc(lengthvalue);
-  
-  printf("-Number of symbols: %lu\n",nsymbols);
-  //unsigned long probs[nsymbols];
-  unsigned long *probs;
-  probs = malloc(powint(2,8*lengthvalue)*sizeof(unsigned long));
-  for (i = 0; i < nsymbols; i++)
-    probs[i] = 0;
-    
-  for (i = 0; i < filesize/lengthvalue; i++) {
-    fread(buffer, lengthvalue, 1, inputfile);
-    //printf("%4X ", *buffer);
-    //printf("%d ", *buffer);
-    currentsymbol = 0;
-    for (j = 0; j < lengthvalue; j++){
-      currentsymbol += buffer[j]*powint(2,8*(lengthvalue - 1 - j));
-    }
-    probs[currentsymbol]++;
-    //printf("%.4X ", currentsymbol);
-  }
-  
-  FILE *probsresult = fopen("probs.txt","w");
-  for (i=0; i < nsymbols; i++) {
-    //printf("%.2X : %lu\n", i, probs[i]);
-    fprintf(probsresult, "%lu\n",probs[i]);
-  }
-  fclose(probsresult);
-  
+int encode(char *input_file_value, char *output_file_value, unsigned char length_value)
+{
+	unsigned long i;
+	unsigned long j;
+	printf("  Encoding\n");
+	printf("-Opening file %s\n", input_file_value);
 
-  //Valors de prova
-  //nsymbols=8;
-  //unsigned long probs2[] = {31, 30, 20, 10, 4, 3, 1, 1};
-  //unsigned long probs2[] = {20, 30, 1, 31, 4, 10, 3, 1};
-  //unsigned long probs2[] = {40,15,15,10,10,5,4,1};
-  //for (i = 0; i < nsymbols; i++)
-  //  probs[i] = probs2[i];
-  
-  unsigned long tree[(nsymbols - 1) * 2];
-  unsigned long indexes[nsymbols];
-  for (i = 0; i < nsymbols; i++)
-    indexes[i] = i;
-  
-  unsigned long min1;
-  unsigned long min2;
-  unsigned int position1 = 0;
-  unsigned int position2 = 0;
-  /*for (i = 0; i < nsymbols; i++)
-    printf("%i %lu\n", indexes[i], probs[i]);*/
-  unsigned long totalsymbols = nsymbols;
-  //unsigned long codelength[nsymbols];
-  //for (i = 0; i < nsymbols; i++)
-  //  codelength[i] = 0;
-    
-  //unsigned char code[nsymbols*2][lengthvalue*8];
-  
-  code codeh[nsymbols*2];
-  for (i = 0; i < nsymbols; i++)
-    codeh[i].length = 0;
-  unsigned long order[nsymbols];
-  for (i = 0; i < nsymbols; i++)
-    order[i] = i;
-  
-  /*
-  for (i = 0; i < nsymbols - 1; i++) { // nsymbols - 1
-    bubbleSort(probs, indexes, totalsymbols);
-    tree[i * 2] = indexes[totalsymbols-2]; //0
-    code[indexes[totalsymbols-2]][codelength[indexes[totalsymbols-2]]] = 0;
-    codelength[indexes[totalsymbols-2]]++;
-    tree[(i * 2) + 1] = indexes[totalsymbols-1]; //1
-    for (j = totalsymbols-1; j < nsymbols; j++){
-      code[indexes[j]][codelength[indexes[j]]] = 1;
-      codelength[indexes[j]]++;
-    }
-    probs[indexes[totalsymbols-2]] += probs[indexes[totalsymbols-1]];
-    totalsymbols--;
-  }
-  */
+	FILE *inputfile = fopen(input_file_value,"rb");
+	if (!inputfile) {
+		printf("File %s doesn't exist\n", input_file_value);
+		return 2;
+	}
 
-  bubbleSort(probs, order, totalsymbols);
-  
-  /*for (i = 0; i < nsymbols; i++)
-    printf("%lu - %lu, ", order[i], probs[i]);
-  printf("XXX\n\n");*/
-  
-  unsigned long tmp;
-  for (i = 0; i < nsymbols - 1; i++) { // nsymbols - 1
-    bubbleSort(probs, indexes, totalsymbols);
+	unsigned long filesize = getFileSize(input_file_value);
+	printf("-File size: %lu bytes\n", filesize);
 
-    if ( indexes[totalsymbols-2] < indexes[totalsymbols-1] ) {
-      tree[i * 2] = indexes[totalsymbols-2]; //0
-      tree[(i * 2) + 1] = indexes[totalsymbols-1]; //1
-    } else {
-      //printf("Gira");
-      tmp = probs[totalsymbols-2];
-      probs[totalsymbols-2] = probs[totalsymbols-1];
-      probs[totalsymbols-1] = tmp;
-      
-      tmp = indexes[totalsymbols-2];
-      indexes[totalsymbols-2] = indexes[totalsymbols-1];
-      indexes[totalsymbols-1] = tmp;
-      
-      tree[i * 2] = indexes[totalsymbols-2]; //0
-      tree[(i * 2) + 1] = indexes[totalsymbols-1]; //1     
-    } 
-    /*for (j = 0; j < totalsymbols; j++) 
-      printf("%lu-%lu ", probs[j], indexes[j]+1);*/
-    //printf("(%u %u-%lu,%lu>%u)\n", tree[i*2]+1, tree[(i*2)+1]+1,probs[tree[i*2]],probs[tree[(i*2)+1]], totalsymbols);
-    
-    probs[totalsymbols-2] += probs[totalsymbols-1];
+	unsigned long nsymbols = powInt(2,8*length_value);
+	unsigned long currentsymbol = 0;
 
-    totalsymbols--;
-  }
-    
-  printf("\n");
-  //unsigned int children[nsymbols][nsymbols];
-  //unsigned int childrenlength[nsymbols];
-  //for (i = 0; i < nsymbols; i++)
-  //  childrenlength[i] = 0;
-  for (i = 0; i < nsymbols; i++)
-    codeh[i].children.length = 0;
-  
-  unsigned int parent;
-  for (i = 0; i < (nsymbols - 1); i++) {
-/*    code[tree[i * 2]][codelength[tree[i * 2]]] = 0;
-    codelength[tree[i * 2]]++;*/
-    parent = tree[i * 2];
-    //printf("->%u\n",code[6][0]);
-    fill(0, codeh, parent);
-/*    if ( child[parent] != -1 ) {
-      do {
-        code[child[parent]][codelength[child[parent]]] = 0;
-        codelength[child[parent]]++;
-        parent = child[parent];
-      } while ( parent != -1 );
-    }*/
-    
-/*    code[tree[(i * 2) +1 ]][codelength[tree[(i * 2) +1 ]]] = 1;
-    codelength[tree[(i * 2) +1 ]]++;*/
-    parent = tree[(i * 2) +1 ];
-    fill(1, codeh, parent);
-/*    if ( child[parent] != -1 ) {
-      do {
-        code[child[parent]][codelength[child[parent]]] = 1;
-        codelength[child[parent]]++;
-        parent = child[parent];
-      } while ( parent != -1 );
-    }*/
-    //children[tree[i * 2]][childrenlength[tree[i * 2]]] = tree[(i * 2) +1 ];
-	codeh[tree[i * 2]].children.value[codeh[tree[i * 2]].children.length] = tree[(i * 2) + 1];
-    //childrenlength[tree[i * 2]]++;
-	codeh[tree[i * 2]].children.length++;
-  }
-  
-  /*
-  bubble Sort(probs, indexes, totalsymbols);
-  
-  min1 = probs[0];
-  for (i = 0; i < nsymbols; i++) {
-    if (probs[i] < min1) {
-      min1 = probs[i];
-      position1 = i;
-    }
-  }
-  min2 = min1;
-  for (i = 0; i < nsymbols; i++) {
-    if (probs[i] <= min2 && i != position1) {
-      min2 = probs[i];
-      position2 = i;
-    }
-  }*/
-  
-/*  
-  printf("\n");
-  for (i = 0; i < nsymbols; i++) {
-    printf("%lu - ", order[i]);
-    for (j = 0; j < codeh[i].length; j++)
-      printf("%i",codeh[i].value[j]);
-    printf("\n");
-  }
-  printf("-----\n");
-*/
-/*
-  i = 32;
-  for (j = 0; j < codeh[i].length; j++)
-      printf("%i",codeh[i].value[j]);
-  
-  printf("\n-----\n");
-*/  
-/*  for (i = 0; i < nsymbols; i++) {
-    printf("%lu - ",i);
-    printf("%lu", codelength[i]);
-    printf("\n");
-  }*/
-/*  
-  for (i = 0; i < nsymbols; i++)
-    indexes[i] = i;
-  unsigned long codelengthcopy[nsymbols];
-  for (i = 0; i < nsymbols; i++)
-    codelengthcopy[i] = codeh[i].length;
-*/  
-  unsigned long ordercopy[nsymbols];
-  for (i = 0; i < nsymbols; i++)
-    ordercopy[i] = order[i];
-  
+	unsigned char *buffer;
+	buffer = malloc(length_value);
 
-  for (i = 0; i < nsymbols; i++)
-    indexes[i] = i;
-  bubbleSortR(ordercopy, indexes, nsymbols);
-/*  
-  for (i = 0; i < nsymbols; i++) {
-    printf("%lu - ",order[i]);
-    for (j = 0; j < codeh[indexes[i]].length; j++)
-      printf("%i",codeh[indexes[i]].value[j]);
-    printf("\n");
-  }
-  
-  printf("\n-----\n");
-  i = 32;
-  for (j = 0; j < codeh[indexes[i]].length; j++)
-      printf("%i",codeh[indexes[i]].value[j]);
-  printf("\n-----\n");
-*/  
-  code codefinalre[nsymbols];
-  code codefinal[nsymbols];
-  
-  
-  for (i = 0; i < nsymbols; i++)
-    codefinalre[i] = codeh[indexes[i]];
-  for (i = 0; i < nsymbols; i++){
-    for (j = 0; j < codefinalre[i].length; j++)
-      codefinal[i].value[j] = codefinalre[i].value[codefinalre[i].length - 1 - j];
-    codefinal[i].length = codefinalre[i].length;
-  }  
-//Show final codes
-  
-  /*for (i = 0; i < nsymbols; i++) {
-    printf("%lu - ",i);
-    for (j = 0; j < codefinal[i].length; j++)
-      printf("%i",codefinal[i].value[j]);
-    printf("\n");
-  }*/
+	printf("-Number of symbols: %lu\n",nsymbols);
 
-/*  for (i = 0; i < (nsymbols - 1); i++)
-    printf("(%u %u) ", tree[i * 2], tree[(i * 2) + 1]);*/
-  
-/*  min1 = probs[0];
+	unsigned long *probs;
+	probs = malloc(powInt(2,8*length_value)*sizeof(unsigned long));
+	for (i = 0; i < nsymbols; i++)
+		probs[i] = 0;
 
-  for (i = 0; i < nsymbols; i++) {
-    if (probs[i] < min1) {
-      min1 = probs[i];
-      position1 = i;
-    }
-  }
-  min2 = min1;
-  for (i = 0; i < nsymbols; i++) {
-    if (probs[i] <= min2 && i != position1) {
-      min2 = probs[i];
-      position2 = i;
-    }
-  }
-  
-  
-  printf("\nLes probabs mes petites son: %lu a %i i %lu a %i\n",\
-  min1, position1, min2, position2);*/
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-  fseek(inputfile, 0L, SEEK_SET);
-  unsigned char binarybuffer[nsymbols];
-  unsigned long binarybuffersize = 0;
-  
-  unsigned char *outbuffer;
-  outbuffer = malloc(lengthvalue);
-  
-  FILE *outputfile = fopen(outputfilevalue,"wb");
-  if (!outputfile) {
-    printf("Error with output file %s\n", outputfilevalue);
-    return 3;
-  }
-  
-  //Headers of file
-  //X will be the number of bits added to create the last byte
-  char filetype[] = ".huf1.0X";
-  for (i = 0; i < 8; i++)
-    fwrite(&filetype[i] ,1 ,1 ,outputfile);
-    
-  fwrite(&lengthvalue ,1 ,1 ,outputfile);
-  
-  /*for (i = 0; i < nsymbols; i++)
-    printf("%lu\n", order[i]);*/
-  /*for (i = 0; i < (nsymbols - 1) * 2; i++)
-    printf("%lu\n", tree[i]);*/
-  
-  for (i = 0; i < nsymbols; i++)
-    fwrite(&order[i], sizeof(unsigned long) ,1 ,outputfile);
-    
-  for (i = 0; i < (nsymbols - 1) * 2; i++)
-    fwrite(&tree[i], sizeof(unsigned long), 1, outputfile);
-  
-  
-  for (i = 0; i < filesize/lengthvalue; i++) {
-    fread(buffer, lengthvalue, 1, inputfile);
-    //if ( i > filesize/lengthvalue - 10)
-    //  printf("%2X ", buffer[0]);
-    currentsymbol = 0;
-    for (j = 0; j < lengthvalue; j++){
-      currentsymbol += buffer[j]*powint(2,8*(lengthvalue - 1 - j));
-    }
-    //if (i < 10)
-    //  printf("%X ",currentsymbol);
-    for (j = 0; j < codefinal[currentsymbol].length; j++)
-      binarybuffer[binarybuffersize+j] = codefinal[currentsymbol].value[j];
-    /*if (i < 10){
-      for (j = 0; j < codefinal[currentsymbol].length; j++)
-        printf("%u",codefinal[currentsymbol].value[j]); 
-      printf(" ");}*/
-    binarybuffersize += codefinal[currentsymbol].length;
-    
-    /*if (i < 10){
-      for (j = 0; j < binarybuffersize; j++)
-        printf("%u", binarybuffer[j]);
-      printf("\n");
-    }*/
-    
-    while (binarybuffersize >= lengthvalue*8){
-      *outbuffer = 0;
-      for (j = 0; j < lengthvalue*8; j++)
-        *outbuffer += binarybuffer[lengthvalue*8-1 - j] * powint(2,j);
-      //if (i < 10)
-      //  printf("%X ", outbuffer[0]);
-      fwrite(outbuffer ,lengthvalue ,1 ,outputfile);
-      
-      for (j = 0; j < binarybuffersize - lengthvalue*8; j++)
-        binarybuffer[j] = binarybuffer[j+lengthvalue*8];
-      binarybuffersize -= lengthvalue*8;
-    }
-  }
-  unsigned char filled = lengthvalue*8 - binarybuffersize;
-  *outbuffer = 0;
-  for (j = 0; j < lengthvalue*8; j++)
-    *outbuffer += binarybuffer[lengthvalue*8-1 - j] * powint(2,j);
-  //if (i < 10)
-  //  printf("%X ", outbuffer[0]);
-  fwrite(outbuffer ,lengthvalue ,1 ,outputfile);
-  
-  fseek(outputfile, 7 * lengthvalue, SEEK_SET);
-  fwrite(&filled, 1, 1, outputfile);
+	for (i = 0; i < filesize/length_value; i++) {
+		fread(buffer, length_value, 1, inputfile);
+		currentsymbol = 0;
+		for (j = 0; j < length_value; j++)
+			currentsymbol += buffer[j]*powInt(2,8*(length_value - 1 - j));
+
+		probs[currentsymbol]++;
+	}
+
+	FILE *probsresult = fopen("probs.txt","w");
+	for (i=0; i < nsymbols; i++)
+		fprintf(probsresult, "%lu\n",probs[i]);
+
+	fclose(probsresult);
+
+	unsigned long tree[(nsymbols - 1) * 2];
+	unsigned long indexes[nsymbols];
+	for (i = 0; i < nsymbols; i++)
+		indexes[i] = i;
+
+	unsigned long min1;
+	unsigned long min2;
+	unsigned int position1 = 0;
+	unsigned int position2 = 0;
+	unsigned long totalsymbols = nsymbols;
+
+	code codeh[nsymbols*2];
+	for (i = 0; i < nsymbols; i++)
+		codeh[i].length = 0;
+
+	unsigned long order[nsymbols];
+	for (i = 0; i < nsymbols; i++)
+		order[i] = i;
+
+	bubbleSort(probs, order, totalsymbols);
+
+	unsigned long tmp;
+	for (i = 0; i < nsymbols - 1; i++) {
+		bubbleSort(probs, indexes, totalsymbols);
+
+		if ( indexes[totalsymbols-2] < indexes[totalsymbols-1] ) {
+			tree[i * 2] = indexes[totalsymbols-2];
+			tree[(i * 2) + 1] = indexes[totalsymbols-1];
+		} else {
+			tmp = probs[totalsymbols-2];
+			probs[totalsymbols-2] = probs[totalsymbols-1];
+			probs[totalsymbols-1] = tmp;
+
+			tmp = indexes[totalsymbols-2];
+			indexes[totalsymbols-2] = indexes[totalsymbols-1];
+			indexes[totalsymbols-1] = tmp;
+
+			tree[i * 2] = indexes[totalsymbols-2]; //0
+			tree[(i * 2) + 1] = indexes[totalsymbols-1]; //1
+		}
+
+		probs[totalsymbols-2] += probs[totalsymbols-1];
+
+		totalsymbols--;
+	}
+
+	printf("\n");
+
+	for (i = 0; i < nsymbols; i++)
+		codeh[i].children.length = 0;
+
+	unsigned int parent;
+	for (i = 0; i < (nsymbols - 1); i++) {
+		parent = tree[i * 2];
+		fill(0, codeh, parent);
+		parent = tree[(i * 2) +1 ];
+		fill(1, codeh, parent);
+		codeh[tree[i * 2]].children.value[codeh[tree[i * 2]].children.length] = tree[(i * 2) + 1];
+		codeh[tree[i * 2]].children.length++;
+	}
+
+	unsigned long ordercopy[nsymbols];
+	for (i = 0; i < nsymbols; i++)
+		ordercopy[i] = order[i];
 
 
-  
-  free(probs);
-  free(buffer);
-  fclose(inputfile);
-  fclose(outputfile);    
-  free(outbuffer);
+	for (i = 0; i < nsymbols; i++)
+		indexes[i] = i;
+	bubbleSortR(ordercopy, indexes, nsymbols);
 
-  unsigned long filesizecomp = getfilesize(outputfilevalue);
-  printf("-Compressed file size: %lu bytes\n", filesizecomp);
-  printf("-Compression ratio: %f\n", (float) filesize / filesizecomp);
-  
-  return 0;
+	code codefinalre[nsymbols];
+	code codefinal[nsymbols];
+
+
+	for (i = 0; i < nsymbols; i++)
+		codefinalre[i] = codeh[indexes[i]];
+	for (i = 0; i < nsymbols; i++) {
+		for (j = 0; j < codefinalre[i].length; j++)
+			codefinal[i].value[j] = codefinalre[i].value[codefinalre[i].length - 1 - j];
+
+		codefinal[i].length = codefinalre[i].length;
+	}
+	//Show final codes
+
+	/*for (i = 0; i < nsymbols; i++) {
+	  printf("%lu - ",i);
+	  for (j = 0; j < codefinal[i].length; j++)
+	  printf("%i",codefinal[i].value[j]);
+	  printf("\n");
+	  }*/
+
+	/*  for (i = 0; i < (nsymbols - 1); i++)
+	    printf("(%u %u) ", tree[i * 2], tree[(i * 2) + 1]);*/
+
+	/*  min1 = probs[0];
+
+	    for (i = 0; i < nsymbols; i++) {
+	    if (probs[i] < min1) {
+	    min1 = probs[i];
+	    position1 = i;
+	    }
+	    }
+	    min2 = min1;
+	    for (i = 0; i < nsymbols; i++) {
+	    if (probs[i] <= min2 && i != position1) {
+	    min2 = probs[i];
+	    position2 = i;
+	    }
+	    }
+
+
+	    printf("\nLes probabs mes petites son: %lu a %i i %lu a %i\n",\
+	    min1, position1, min2, position2);*/
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	fseek(inputfile, 0L, SEEK_SET);
+	unsigned char binarybuffer[nsymbols];
+	unsigned long binarybuffersize = 0;
+
+	unsigned char *outbuffer;
+	outbuffer = malloc(length_value);
+
+	FILE *outputfile = fopen(output_file_value,"wb");
+	if (!outputfile) {
+		printf("Error with output file %s\n", output_file_value);
+		return 3;
+	}
+
+	//Headers of file
+	//X will be the number of bits added to create the last byte
+	char filetype[] = ".huf1.0X";
+	for (i = 0; i < 8; i++)
+		fwrite(&filetype[i] ,1 ,1 ,outputfile);
+
+	fwrite(&length_value ,1 ,1 ,outputfile);
+
+	for (i = 0; i < nsymbols; i++)
+		fwrite(&order[i], sizeof(unsigned long) ,1 ,outputfile);
+
+	for (i = 0; i < (nsymbols - 1) * 2; i++)
+		fwrite(&tree[i], sizeof(unsigned long), 1, outputfile);
+
+
+	for (i = 0; i < filesize/length_value; i++) {
+		fread(buffer, length_value, 1, inputfile);
+		currentsymbol = 0;
+		for (j = 0; j < length_value; j++)
+			currentsymbol += buffer[j]*powInt(2,8*(length_value - 1 - j));
+
+		for (j = 0; j < codefinal[currentsymbol].length; j++)
+			binarybuffer[binarybuffersize+j] = codefinal[currentsymbol].value[j];
+
+		binarybuffersize += codefinal[currentsymbol].length;
+
+		while (binarybuffersize >= length_value*8){
+			*outbuffer = 0;
+			for (j = 0; j < length_value*8; j++)
+				*outbuffer += binarybuffer[length_value*8-1 - j] * powInt(2,j);
+
+			fwrite(outbuffer ,length_value ,1 ,outputfile);
+
+			for (j = 0; j < binarybuffersize - length_value*8; j++)
+				binarybuffer[j] = binarybuffer[j+length_value*8];
+
+			binarybuffersize -= length_value*8;
+		}
+	}
+	unsigned char filled = length_value*8 - binarybuffersize;
+	*outbuffer = 0;
+	for (j = 0; j < length_value*8; j++)
+		*outbuffer += binarybuffer[length_value*8-1 - j] * powInt(2,j);
+
+	fwrite(outbuffer ,length_value ,1 ,outputfile);
+
+	fseek(outputfile, 7 * length_value, SEEK_SET);
+	fwrite(&filled, 1, 1, outputfile);
+
+	free(probs);
+	free(buffer);
+	fclose(inputfile);
+	fclose(outputfile);
+	free(outbuffer);
+
+	unsigned long filesizecomp = getFileSize(output_file_value);
+	printf("-Compressed file size: %lu bytes\n", filesizecomp);
+	printf("-Compression ratio: %f\n", (float) filesize / filesizecomp);
+
+	return 0;
 }
 
-int decode (char *inputfilevalue, char *outputfilevalue) {
-  unsigned long i, j, k;
-  printf("  Decoding\n");
-  printf("-Opening file %s\n", inputfilevalue);
-  
-  FILE *inputfile = fopen(inputfilevalue,"rb");
-  if (!inputfile){
-    printf("File %s doesn't exist\n", inputfilevalue);
-    return 2;
-  }
-  
-  char filetype[] = ".huf1.0";
-  
-  unsigned char *bufferheader;
-  bufferheader = malloc(7);
-  
-  fread(bufferheader ,7 ,1 , inputfile);
-  unsigned char filled;
-  fread(&filled, 1, 1, inputfile);
-  //printf("%u -", filled);
-  
-  for (i = 0; i < 4; i++) {
-    if (filetype[i] != bufferheader[i])
-        break;
-  }
-  if (i != 4) {
-    printf("File %s is not a valid huffman file\n", inputfilevalue);
-    return 2;
-  }
-  printf("-Huffman file %s is version %c%c%c\n", inputfilevalue, bufferheader[4], bufferheader[5], bufferheader[6]);
-  
-  unsigned char lengthvalue;
-  fread(&lengthvalue, 1, 1, inputfile);
-  printf("-Length = %u\n", lengthvalue);
-  
-  unsigned long nsymbols = powint(2,8*lengthvalue);
-  unsigned long order[nsymbols];
-  unsigned long tree[(nsymbols - 1) * 2];
-  
-  printf("-Number of symbols: %lu\n", nsymbols);
+int decode(char *input_file_value, char *output_file_value)
+{
+	unsigned long i, j, k;
+	printf("  Decoding\n");
+	printf("-Opening file %s\n", input_file_value);
 
-  fread(order, nsymbols, sizeof(unsigned long), inputfile);
-  fread(tree, (nsymbols - 1) * 2, sizeof(unsigned long), inputfile);
-  
-  /*for (i = 0; i < nsymbols; i++)
-    printf("%lu\n", order[i]);*/
-  /*for (i = 0; i < (nsymbols - 1) * 2; i++)
-    printf("%lu\n", tree[i]);*/
-    
-  code codeh[nsymbols*2];
-  for (i = 0; i < nsymbols; i++)
-    codeh[i].length = 0;
-  
-  for (i = 0; i < nsymbols; i++)
-    codeh[i].children.length = 0;
-  
-  unsigned int parent;
-  for (i = 0; i < (nsymbols - 1); i++) {
-    parent = tree[i * 2];
-    fill(0, codeh, parent);
-    parent = tree[(i * 2) +1 ];
-    fill(1, codeh, parent);
-	codeh[tree[i * 2]].children.value[codeh[tree[i * 2]].children.length] = tree[(i * 2) + 1];
-	codeh[tree[i * 2]].children.length++;
-  }
-  
-  unsigned long ordercopy[nsymbols];
-  for (i = 0; i < nsymbols; i++)
-    ordercopy[i] = order[i];
-  
-  unsigned long indexes[nsymbols];
-  for (i = 0; i < nsymbols; i++)
-    indexes[i] = i;
-  bubbleSortR(ordercopy, indexes, nsymbols);
-    
-  code codefinalre[nsymbols];
-  code codefinal[nsymbols];
-  
-  
-  for (i = 0; i < nsymbols; i++)
-    codefinalre[i] = codeh[indexes[i]];
-  for (i = 0; i < nsymbols; i++){
-    for (j = 0; j < codefinalre[i].length; j++)
-      codefinal[i].value[j] = codefinalre[i].value[codefinalre[i].length - 1 - j];
-    codefinal[i].length = codefinalre[i].length;
-  }
-    
-  /*for (i = 0; i < nsymbols; i++) {
-    printf("%lu - ",i);
-    for (j = 0; j < codefinal[i].length; j++)
-      printf("%i",codefinal[i].value[j]);
-  printf("\n");
-  }*/
-  
-  //unsigned char *buffer;
-  //buffer = malloc(nsymbols*2/8);
-  //unsigned long buffersize = 0;
-  
-  FILE *outputfile = fopen(outputfilevalue,"wb");
-  if (!outputfile) {
-    printf("Error with output file %s\n", outputfilevalue);
-    return 3;
-  }
-  unsigned char buffer = 0;
+	FILE *inputfile = fopen(input_file_value,"rb");
+	if (!inputfile) {
+		printf("File %s doesn't exist\n", input_file_value);
+		return 2;
+	}
 
-  unsigned char binarybuffer[nsymbols*2];
-  int binarybuffersize = 0;
-  
-  i = (unsigned long) ftell(inputfile);
-  unsigned long filesize = getfilesize(inputfilevalue);
-  
-  while (!feof(inputfile)) {
-    while (binarybuffersize < nsymbols && !feof(inputfile)){
-      fread(&buffer, 1, 1, inputfile);
-      //printf("%u (%X) ",buffer,ftell(inputfile));
-      for (j = 0; j < 8*lengthvalue; j++) {
-        binarybuffer[binarybuffersize-j+8*lengthvalue-1] = buffer%2;
-        //printf("%u",buffer%2);
-        buffer = buffer/2; 
-      }
-      binarybuffersize += 8*lengthvalue;
-    }
-   
-    if(feof(inputfile))
-      binarybuffersize -= filled+lengthvalue*8;
-    //for (j = 0; j < binarybuffersize; j++)
-    //  printf("%u", binarybuffer[j]);
-    //printf("\n");
-    
-    if ( binarybuffersize > 0){
-      for (j = 0; j < nsymbols; j++) {
-        for (k = 0; k < codefinal[j].length; k++){ // <--
-          if (codefinal[j].value[k] != binarybuffer[k])
-            break;
-        }
-        
-        if (codefinal[j].length == k) {
-          //printf(">%lu ",j);
-          fwrite(&j,lengthvalue,1,outputfile);
-          //for (k=codefinal[j].length; k < nsymbols*2; k++)
-          //  binarybuffer[k-codefinal[j].length-2] = binarybuffer[k];
-          for (k = 0; k < nsymbols*2-codefinal[j].length; k++)
-            binarybuffer[k] = binarybuffer[k+codefinal[j].length];
-          binarybuffersize -= codefinal[j].length;
-          break;
-        }
-      }
-    }
-  }
-  while (binarybuffersize > 0){  
-    for (j = 0; j < nsymbols; j++) {
-      for (k = 0; k < codefinal[j].length; k++){ // <--
-        if (codefinal[j].value[k] != binarybuffer[k])
-          break;
-      }
-      
-      if (codefinal[j].length == k) {
-        //printf(">%lu ",j);
-        fwrite(&j,lengthvalue,1,outputfile);
-        //for (k=codefinal[j].length; k < nsymbols*2; k++)
-        //  binarybuffer[k-codefinal[j].length-2] = binarybuffer[k];
-        for (k = 0; k < nsymbols*2-codefinal[j].length; k++)
-          binarybuffer[k] = binarybuffer[k+codefinal[j].length];
-        binarybuffersize -= codefinal[j].length;
-        break;
-      }
-    }
-  }
-  
-/*
-  while (binarybuffersize =< nsymbols*2-8*length){
-    fread(buffer, nsymbols - buffersize, 1, inputfile);
-  
-  for (i = i; i < filesize/lengthvalue; i++) {
-    
-    fread(buffer, nsymbols - buffersize, 1, inputfile);
-    currentsymbol = 0;
-    for (j = 0; j < lengthvalue; j++){
-      currentsymbol += buffer[j]*powint(2,8*(lengthvalue - 1 - j));
-    }
-    for (j = 0; j < codefinal[currentsymbol].length; j++)
-      binarybuffer[binarybuffersize+j] = codefinal[currentsymbol].value[j];
-    binarybuffersize += codefinal[currentsymbol].length;
-    
-    while (binarybuffersize > lengthvalue*8 - 1){
-      for (j = 0; j < lengthvalue*8; j++)
-        *outbuffer += binarybuffer[j] * powint(2,j);
-      fwrite(outbuffer ,lengthvalue ,1 ,outputfile);
-      
-      for (j = 0; j < binarybuffersize - lengthvalue*8; j++)
-        binarybuffer[j] = binarybuffer[j+lengthvalue*8];
-      binarybuffersize -= lengthvalue*8;
-    }
-  }
-*/  
-  free(bufferheader);
-  fclose(inputfile);
-  fclose(outputfile);
-  
-  return 0;
+	char filetype[] = ".huf1.0";
+
+	unsigned char *bufferheader;
+	bufferheader = malloc(7);
+
+	fread(bufferheader ,7 ,1 , inputfile);
+	unsigned char filled;
+	fread(&filled, 1, 1, inputfile);
+
+	for (i = 0; i < 4; i++) {
+		if (filetype[i] != bufferheader[i])
+			break;
+	}
+	if (i != 4) {
+		printf("File %s is not a valid huffman file\n", input_file_value);
+		return 2;
+	}
+	printf("-Huffman file %s is version %c%c%c\n", input_file_value, bufferheader[4], bufferheader[5], bufferheader[6]);
+
+	unsigned char length_value;
+	fread(&length_value, 1, 1, inputfile);
+	printf("-Length = %u\n", length_value);
+
+	unsigned long nsymbols = powInt(2,8*length_value);
+	unsigned long order[nsymbols];
+	unsigned long tree[(nsymbols - 1) * 2];
+
+	printf("-Number of symbols: %lu\n", nsymbols);
+
+	fread(order, nsymbols, sizeof(unsigned long), inputfile);
+	fread(tree, (nsymbols - 1) * 2, sizeof(unsigned long), inputfile);
+
+	code codeh[nsymbols*2];
+	for (i = 0; i < nsymbols; i++)
+		codeh[i].length = 0;
+
+	for (i = 0; i < nsymbols; i++)
+		codeh[i].children.length = 0;
+
+	unsigned int parent;
+	for (i = 0; i < (nsymbols - 1); i++) {
+		parent = tree[i * 2];
+		fill(0, codeh, parent);
+		parent = tree[(i * 2) +1 ];
+		fill(1, codeh, parent);
+		codeh[tree[i * 2]].children.value[codeh[tree[i * 2]].children.length] = tree[(i * 2) + 1];
+		codeh[tree[i * 2]].children.length++;
+	}
+
+	unsigned long ordercopy[nsymbols];
+	for (i = 0; i < nsymbols; i++)
+		ordercopy[i] = order[i];
+
+	unsigned long indexes[nsymbols];
+	for (i = 0; i < nsymbols; i++)
+		indexes[i] = i;
+
+	bubbleSortR(ordercopy, indexes, nsymbols);
+
+	code codefinalre[nsymbols];
+	code codefinal[nsymbols];
+
+	for (i = 0; i < nsymbols; i++)
+		codefinalre[i] = codeh[indexes[i]];
+	for (i = 0; i < nsymbols; i++) {
+		for (j = 0; j < codefinalre[i].length; j++)
+			codefinal[i].value[j] = codefinalre[i].value[codefinalre[i].length - 1 - j];
+		codefinal[i].length = codefinalre[i].length;
+	}
+
+	FILE *outputfile = fopen(output_file_value,"wb");
+	if (!outputfile) {
+		printf("Error with output file %s\n", output_file_value);
+		return 3;
+	}
+	unsigned char buffer = 0;
+
+	unsigned char binarybuffer[nsymbols*2];
+	int binarybuffersize = 0;
+
+	i = (unsigned long) ftell(inputfile);
+	unsigned long filesize = getFileSize(input_file_value);
+
+	while (!feof(inputfile)) {
+		while (binarybuffersize < nsymbols && !feof(inputfile)) {
+			fread(&buffer, 1, 1, inputfile);
+			for (j = 0; j < 8*length_value; j++) {
+				binarybuffer[binarybuffersize-j+8*length_value-1] = buffer%2;
+				buffer = buffer/2;
+			}
+			binarybuffersize += 8*length_value;
+		}
+
+		if(feof(inputfile))
+			binarybuffersize -= filled+length_value*8;
+
+		if ( binarybuffersize > 0) {
+			for (j = 0; j < nsymbols; j++) {
+				for (k = 0; k < codefinal[j].length; k++) {
+					if (codefinal[j].value[k] != binarybuffer[k])
+						break;
+				}
+
+				if (codefinal[j].length == k) {
+					fwrite(&j,length_value,1,outputfile);
+					for (k = 0; k < nsymbols*2-codefinal[j].length; k++)
+						binarybuffer[k] = binarybuffer[k+codefinal[j].length];
+
+					binarybuffersize -= codefinal[j].length;
+					break;
+				}
+			}
+		}
+	}
+	while (binarybuffersize > 0) {
+		for (j = 0; j < nsymbols; j++) {
+			for (k = 0; k < codefinal[j].length; k++){ // <--
+				if (codefinal[j].value[k] != binarybuffer[k])
+					break;
+			}
+
+			if (codefinal[j].length == k) {
+				fwrite(&j,length_value,1,outputfile);
+				for (k = 0; k < nsymbols*2-codefinal[j].length; k++)
+					binarybuffer[k] = binarybuffer[k+codefinal[j].length];
+
+				binarybuffersize -= codefinal[j].length;
+				break;
+			}
+		}
+	}
+	free(bufferheader);
+	fclose(inputfile);
+	fclose(outputfile);
+
+return 0;
 }
 
-int main (int argc, char **argv) {
-  int decodeflag = 0;
-  int encodeflag = 0;
-  int helpflag = 0;
-  int lengthvalue = 1;
-  char *inputfilevalue = NULL;
-  char *outputfilevalue = NULL;
-  int index;
-  int c;
-  
-  int nonoptionflag=0;
-  opterr = 0;
+int main(int argc, char **argv)
+{
+	int decode_flag = 0;
+	int encode_flag = 0;
+	int help_flag = 0;
+	int non_option_flag = 0;
+	int length_value = 1;
+	char *input_file_value = NULL;
+	char *output_file_value = NULL;
+	int i, c;
 
-  while ((c = getopt (argc, argv, "edhl:i:o:")) != -1)
-    switch (c) {
-      case 'e':
-        encodeflag = 1;
-        break;
-      case 'd':
-        decodeflag = 1;
-        
-        break;
-      case 'h':
-        helpflag = 1;
-        break;
-      case 'l':
-        lengthvalue = *optarg - 48;
-        printf("Length = %i\n",lengthvalue);
-        break;
-      case 'i':
-        inputfilevalue = optarg;
-        break;
-      case 'o':
-        outputfilevalue = optarg;
-        break;
-      case '?':
-        if (optopt == 'c')
-          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-        else if (isprint (optopt))
-          fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-        else
-          fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
-        return 1;
-      default:
-        abort();
-      }
+	opterr = 0;
 
-  for (index = optind; index < argc; index++) {
-    if (!nonoptionflag)
-      nonoptionflag = 1;
-    printf("Non-option argument: %s\n", argv[index]);
-  }
+	while ((c = getopt (argc, argv, "edhl:i:o:")) != -1) {
+		switch (c) {
+			case 'e':
+				encode_flag = 1;
+				break;
+			case 'd':
+				decode_flag = 1;
+				break;
+			case 'h':
+				help_flag = 1;
+				break;
+			case 'l':
+				length_value = *optarg - 48;
+				printf("Length = %i\n",length_value);
+				break;
+			case 'i':
+				input_file_value = optarg;
+				break;
+			case 'o':
+				output_file_value = optarg;
+				break;
+			case '?':
+				if (optopt == 'c')
+					fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+				else if (isprint (optopt))
+					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+				else
+					fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+				return 1;
+			default:
+				abort();
+		}
+	}
 
-  if (nonoptionflag)
-    return 1;
-  else if (helpflag || (argc == 1))
-    showhelp ();
-  else if (encodeflag || decodeflag){
-  
-    if (!inputfilevalue)
-      printf("You need to specify an input file\n");
-    else if (!outputfilevalue)
-      printf("You need to specify an output file\n");
-    else if (lengthvalue < 1 || lengthvalue > 2)
-      printf("You need to specify a positive length\n");
-    else if (encodeflag)
-      encode(inputfilevalue, outputfilevalue, lengthvalue);
-    else if (decodeflag)
-      decode(inputfilevalue, outputfilevalue);   
+	for (i = optind; i < argc; i++) {
+		if (!non_option_flag)
+			non_option_flag = 1;
+		printf("Non-option argument: %s\n", argv[i]);
+	}
 
-  }
-  
-  return 0;
+	if (non_option_flag)
+		return 1;
+	else if (help_flag || (argc == 1))
+		showHelp(argv[0]);
+	else if (encode_flag || decode_flag) {
+
+		if (!input_file_value)
+			printf("You need to specify an input file\n");
+		else if (!output_file_value)
+			printf("You need to specify an output file\n");
+		else if (length_value < 1)
+			printf("You need to specify a positive length\n");
+		else if (encode_flag)
+			encode(input_file_value, output_file_value, length_value);
+		else if (decode_flag)
+			decode(input_file_value, output_file_value);
+	}
+
+	return 0;
 }
