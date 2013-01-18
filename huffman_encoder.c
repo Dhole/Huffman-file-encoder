@@ -1,138 +1,45 @@
+/***********************************************************************
+ * Huffman file encoder / decoder
+ *
+ * version: 0.2
+ *
+ * Authors: Dhole
+ ***********************************************************************/
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
-
-typedef struct {
-	unsigned int value[256];
-	unsigned int length;
-} child;
-
-typedef struct {
-	unsigned int value[256];
-	unsigned int length;
-	child children;
-} code;
-
-
-
-unsigned long pow_int(int base, int exp)
-{
-	int res = 1;
-	for (; exp > 0; exp--)
-		res = res*base;
-
- 	return res;
-}
-
-void bubble_sort2(unsigned long numbers[], unsigned long indexes[], unsigned int order[],  int array_size)
-{
-	int i, j, temp;
-
-	for (i = (array_size - 1); i > 0; i--) {
-		for (j = 1; j <= i; j++) {
-			if (numbers[j - 1] < numbers[j])
-			{
-				temp = numbers[j - 1];
-				numbers[j - 1] = numbers[j];
-				numbers[j] = temp;
-
-				temp = indexes[j - 1];
-				indexes[j - 1] = indexes[j];
-				indexes[j] = temp;
-
-				temp = order[j - 1];
-				order[j - 1] = order[j];
-				order[j] = temp;
-			}
-		}
-	}
-}
-
-void bubble_sort(unsigned long num[], unsigned long ind[], int array_size, int order)
-{
-	int i, j, tmp;
-
-	for (i = (array_size - 1); i > 0; i--) {
-		for (j = 1; j <= i; j++) {
-			if (order * num[j - 1] < num[j]) {
-				tmp = num[j - 1];
-				num[j - 1] = num[j];
-				num[j] = tmp;
-
-				tmp = ind[j - 1];
-				ind[j - 1] = ind[j];
-				ind[j] = tmp;
-			}
-		}
-	}
-}
-
-int show_help(char program_name[])
-{
-	printf("Huffman encoder (March 2012). \n\n"
-			"Usage: %s [-e/-d] [-i input_file] [-o outpufile]\n"
-			"  -e  encode\n"
-			"  -d  decode\n"
-			"  -l  lenght (1 if omitted)\n"
-			"  -h  help\n"
-			"\nLimitations: Max file size = 4GiB\n", program_name);
-	return 0;
-}
-
-unsigned long get_file_size(char *file_name)
-{
-	struct stat st;
-	stat(file_name, &st);
-	return st.st_size;
-}
-
-int fill(unsigned char value, code codeh[], unsigned long parent)
-{
-	codeh[parent].value[codeh[parent].length] = value;
-	codeh[parent].length++;
-	unsigned int current_children_length = codeh[parent].children.length;
-	while ( current_children_length != 0 ) {
-		fill(value, codeh, codeh[parent].children.value[current_children_length - 1]);
-		current_children_length--;
-	}
-}
+#include "huffman_functions.h"
 
 int encode(FILE *input_file, unsigned long file_size, FILE *output_file, unsigned char length_value)
 {
-	unsigned long i;
-	unsigned long j;
-
-	printf("-File size: %lu bytes\n", file_size);
-
-	unsigned long n_symbols = pow_int(2,8*length_value);
-	printf("-Number of symbols: %lu\n", n_symbols);
-	unsigned long current_symbol = 0;
-
+	unsigned long i, j, n_symbols, current_symbol;
 	unsigned char *buffer;
-	buffer = malloc(length_value);
-
 	unsigned long *probs;
-	probs = malloc(pow_int(2,8*length_value)*sizeof(unsigned long));
+	code *codeh;
+
+	n_symbols = pow_int(2, 8 * length_value);
+	printf("- Number of symbols: %lu\n", n_symbols);
+
+	buffer = malloc(length_value);
+	probs = malloc(pow_int(2, 8 * length_value) * sizeof(unsigned long));
+
+	// Initialize the probabilities vector to 0
 	for (i = 0; i < n_symbols; i++)
 		probs[i] = 0;
 
+	// Get the probabilities of each symbol in the file
 	for (i = 0; i < file_size/length_value; i++) {
 		fread(buffer, length_value, 1, input_file);
 		current_symbol = 0;
 		for (j = 0; j < length_value; j++)
-			current_symbol += buffer[j]*pow_int(2,8*(length_value - 1 - j));
+			current_symbol += buffer[j] * pow_int(256, j);
 
 		probs[current_symbol]++;
 	}
-
-	FILE *probs_result = fopen("probs.txt","w");
-	for (i = 0; i < n_symbols; i++)
-		fprintf(probs_result, "%lu\n", probs[i]);
-
-	fclose(probs_result);
 
 	unsigned long tree[(n_symbols - 1) * 2];
 	unsigned long indexes[n_symbols];
@@ -145,15 +52,13 @@ int encode(FILE *input_file, unsigned long file_size, FILE *output_file, unsigne
 	unsigned int position2 = 0;
 	unsigned long total_symbols = n_symbols;
 
-	code codeh[n_symbols*2];
+	codeh = malloc(n_symbols * 2 * sizeof(code));
 	for (i = 0; i < n_symbols; i++)
 		codeh[i].length = 0;
 
 	unsigned long order[n_symbols];
 	for (i = 0; i < n_symbols; i++)
 		order[i] = i;
-
-	//bubble_sort(probs, order, total_symbols, 1);
 
 	unsigned long tmp;
 	for (i = 0; i < n_symbols - 1; i++) {
@@ -179,8 +84,6 @@ int encode(FILE *input_file, unsigned long file_size, FILE *output_file, unsigne
 
 		total_symbols--;
 	}
-
-	printf("\n");
 
 	for (i = 0; i < n_symbols; i++)
 		codeh[i].children.length = 0;
@@ -332,17 +235,17 @@ int decode(FILE *input_file, unsigned long file_size, char *input_file_name, FIL
 		printf("File %s is not a valid huffman file\n", input_file_name);
 		return 2;
 	}
-	printf("-Huffman file %s is version %c%c%c\n", input_file_name, bufferheader[4], bufferheader[5], bufferheader[6]);
+	printf("- Huffman file %s is version %c%c%c\n", input_file_name, bufferheader[4], bufferheader[5], bufferheader[6]);
 
 	unsigned char length_value;
 	fread(&length_value, 1, 1, input_file);
-	printf("-Length = %u\n", length_value);
+	printf("- Length = %u\n", length_value);
 
 	unsigned long n_symbols = pow_int(2,8*length_value);
 	unsigned long order[n_symbols];
 	unsigned long tree[(n_symbols - 1) * 2];
 
-	printf("-Number of symbols: %lu\n", n_symbols);
+	printf("- Number of symbols: %lu\n", n_symbols);
 
 	fread(order, n_symbols, sizeof(unsigned long), input_file);
 	fread(tree, (n_symbols - 1) * 2, sizeof(unsigned long), input_file);
@@ -447,7 +350,7 @@ return 0;
 
 int process_command(char command, char *input_file_name, char *output_file_name, unsigned int length_value)
 {
-	printf("-Opening file %s\n", input_file_name);
+	printf("- Opening file %s\n", input_file_name);
 	FILE *input_file = fopen(input_file_name,"rb");
 	if (!input_file) {
 		printf("File %s doesn't exist\n", input_file_name);
@@ -463,17 +366,18 @@ int process_command(char command, char *input_file_name, char *output_file_name,
 
 	switch (command) {
 	case 'e':
-		printf("  Encoding\n");
+		printf(">>> Encoding\n");
+		printf("- File size: %lu bytes\n", file_size);
 		encode(input_file, file_size, output_file, length_value);
 
 		unsigned long file_sizecomp = get_file_size(output_file_name);
-		printf("-Compressed file size: %lu bytes\n", file_sizecomp);
-		printf("-Compression ratio: %f\n", (float) file_size / file_sizecomp);
+		printf("- Compressed file size: %lu bytes\n", file_sizecomp);
+		printf("- Compression ratio: %f\n", (float) file_size / file_sizecomp);
 
 		break;
 
 	case 'd':
-		printf("  Decoding\n");
+		printf(">>> Decoding\n");
 		decode(input_file, file_size, input_file_name, output_file);
 
 		break;
