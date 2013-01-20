@@ -12,12 +12,6 @@
 typedef struct {
 	unsigned int value[256];
 	unsigned int length;
-} child;
-
-typedef struct {
-	unsigned int value[256];
-	unsigned int length;
-	child children;
 } code;
 
 // Calcules base^exp

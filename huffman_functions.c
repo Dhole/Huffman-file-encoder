@@ -84,14 +84,3 @@ unsigned long get_file_size(char *file_name)
 	stat(file_name, &st);
 	return st.st_size;
 }
-
-int fill(unsigned char value, code codeh[], unsigned long parent)
-{
-	codeh[parent].value[codeh[parent].length] = value;
-	codeh[parent].length++;
-	unsigned int current_children_length = codeh[parent].children.length;
-	while ( current_children_length != 0 ) {
-		fill(value, codeh, codeh[parent].children.value[current_children_length - 1]);
-		current_children_length--;
-	}
-}
