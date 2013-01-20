@@ -21,7 +21,7 @@ typedef struct {
 } code;
 
 // Calcules base^exp
-unsigned long pow_int(int base, int exp);
+unsigned long pow_int(unsigned long base, unsigned long exp);
 
 void bubble_sort2(unsigned long numbers[], unsigned long indexes[], unsigned int order[],  int array_size);
 

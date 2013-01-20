@@ -14,76 +14,73 @@
 
 #include "huffman_functions.h"
 
-int encode(FILE *input_file, unsigned long file_size, FILE *output_file, unsigned char length_value)
+#define READ_SIZE 512
+
+void get_probabilities(FILE *input_file, unsigned long n_symbols, unsigned long *probs)
 {
-	unsigned long i, j, n_symbols, current_symbol;
-	unsigned char *buffer;
-	unsigned long *probs;
-	code *codeh;
+	unsigned long current_symbol;
+	unsigned char *buffer, *buffer_point;
+	unsigned int bytes_read, i, j;
+	unsigned int length = n_symbols / 256;
 
-	n_symbols = pow_int(2, 8 * length_value);
-	printf("- Number of symbols: %lu\n", n_symbols);
 
-	buffer = malloc(length_value);
-	probs = malloc(pow_int(2, 8 * length_value) * sizeof(unsigned long));
+	buffer = malloc(length * READ_SIZE);
 
 	// Initialize the probabilities vector to 0
 	for (i = 0; i < n_symbols; i++)
 		probs[i] = 0;
 
 	// Get the probabilities of each symbol in the file
-	for (i = 0; i < file_size/length_value; i++) {
-		fread(buffer, length_value, 1, input_file);
-		current_symbol = 0;
-		for (j = 0; j < length_value; j++)
-			current_symbol += buffer[j] * pow_int(256, j);
+	while(!feof(input_file)) {
+		bytes_read = fread(buffer, length, READ_SIZE, input_file);
+		buffer_point = buffer;
 
-		probs[current_symbol]++;
+		for (; bytes_read > 0; bytes_read--) {
+			current_symbol = 0;
+
+			for (j = 0; j < length; j++) {
+				current_symbol += *buffer_point * pow_int(256, j);
+				buffer_point++;
+			}
+			probs[current_symbol]++;
+		}
 	}
+	free(buffer);
+}
 
-	unsigned long tree[(n_symbols - 1) * 2];
+void create_tree(unsigned long *probs, unsigned long n_symbols, unsigned long *tree)
+{
+	unsigned long total_symbols = n_symbols;
 	unsigned long indexes[n_symbols];
+	unsigned int i;
 	for (i = 0; i < n_symbols; i++)
 		indexes[i] = i;
 
-	unsigned long min1;
-	unsigned long min2;
-	unsigned int position1 = 0;
-	unsigned int position2 = 0;
-	unsigned long total_symbols = n_symbols;
 
-	codeh = malloc(n_symbols * 2 * sizeof(code));
-	for (i = 0; i < n_symbols; i++)
-		codeh[i].length = 0;
-
-	unsigned long order[n_symbols];
-	for (i = 0; i < n_symbols; i++)
-		order[i] = i;
-
-	unsigned long tmp;
 	for (i = 0; i < n_symbols - 1; i++) {
 		bubble_sort(probs, indexes, total_symbols, 1);
 
-		if ( indexes[total_symbols - 2] < indexes[total_symbols - 1] ) {
-			tree[i * 2] = indexes[total_symbols - 2];
-			tree[(i * 2) + 1] = indexes[total_symbols - 1];
-		} else {
-			tmp = probs[total_symbols - 2];
-			probs[total_symbols - 2] = probs[total_symbols - 1];
-			probs[total_symbols - 1] = tmp;
-
-			tmp = indexes[total_symbols - 2];
-			indexes[total_symbols - 2] = indexes[total_symbols - 1];
-			indexes[total_symbols - 1] = tmp;
-
-			tree[i * 2] = indexes[total_symbols - 2]; //0
-			tree[(i * 2) + 1] = indexes[total_symbols  -  1]; //1
-		}
+		tree[i * 2] = indexes[total_symbols - 2];
+		tree[(i * 2) + 1] = indexes[total_symbols - 1];
 
 		probs[total_symbols - 2] += probs[total_symbols - 1];
 
 		total_symbols--;
 	}
+}
+
+void create_huff_code( unsigned long *tree, unsigned long n_symbols, code *codefinal, unsigned long *order)
+{
+	unsigned long i, j;
+	code *codeh;
+	codeh = malloc(n_symbols * 2 * sizeof(code));
+
+	for (i = 0; i < n_symbols; i++)
+		codeh[i].length = 0;
+
+
+	for (i = 0; i < n_symbols; i++)
+		order[i] = i;
 
 	for (i = 0; i < n_symbols; i++)
 		codeh[i].children.length = 0;
@@ -102,13 +99,12 @@ int encode(FILE *input_file, unsigned long file_size, FILE *output_file, unsigne
 	for (i = 0; i < n_symbols; i++)
 		ordercopy[i] = order[i];
 
-
+	unsigned long indexes[n_symbols];
 	for (i = 0; i < n_symbols; i++)
 		indexes[i] = i;
 	bubble_sort(ordercopy, indexes, n_symbols, -1);
 
 	code codefinalre[n_symbols];
-	code codefinal[n_symbols];
 
 
 	for (i = 0; i < n_symbols; i++)
@@ -120,43 +116,50 @@ int encode(FILE *input_file, unsigned long file_size, FILE *output_file, unsigne
 		codefinal[i].length = codefinalre[i].length;
 	}
 	//Show final codes
+	/*
+	for (i = 0; i < n_symbols; i++) {
+		printf("%lu - ",i);
+		for (j = 0; j < codefinal[i].length; j++)
+			printf("%i",codefinal[i].value[j]);
+		printf("\n");
+	}*/
+}
 
-	/*for (i = 0; i < n_symbols; i++) {
-	  printf("%lu - ",i);
-	  for (j = 0; j < codefinal[i].length; j++)
-	  printf("%i",codefinal[i].value[j]);
-	  printf("\n");
-	  }*/
-
-	/*  for (i = 0; i < (n_symbols - 1); i++)
-	    printf("(%u %u) ", tree[i * 2], tree[(i * 2) + 1]);*/
-
-	/*  min1 = probs[0];
-
-	    for (i = 0; i < n_symbols; i++) {
-	    if (probs[i] < min1) {
-	    min1 = probs[i];
-	    position1 = i;
-	    }
-	    }
-	    min2 = min1;
-	    for (i = 0; i < n_symbols; i++) {
-	    if (probs[i] <= min2 && i != position1) {
-	    min2 = probs[i];
-	    position2 = i;
-	    }
-	    }
+int encode(FILE *input_file, unsigned long file_size, FILE *output_file, unsigned int length)
+{
+	unsigned long i, j, n_symbols, current_symbol, tmp;
+	unsigned long *probs;
+	unsigned char *buffer;
+	code *codefinal;
+	unsigned long *order;
 
 
-	    printf("\nLes probabs mes petites son: %lu a %i i %lu a %i\n",\
-	    min1, position1, min2, position2);*/
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	n_symbols = pow_int(2, 8 * length);
+
+	buffer = malloc(length * READ_SIZE);
+	probs = malloc(pow_int(2, 8 * length) * sizeof(unsigned long));
+
+	get_probabilities(input_file, n_symbols, probs);
+
+	unsigned long tree[(n_symbols - 1) * 2];
+
+	create_tree(probs, n_symbols, tree);
+
+	// Show packed tree
+	for (i = 0; i < (n_symbols - 1); i++)
+		printf("(%lu, %lu) ", tree[i * 2], tree[i * 2 + 1]);
+	printf("\n");
+
+	order = malloc(n_symbols * sizeof(unsigned long));
+	codefinal = malloc(n_symbols * 2 * sizeof(code));
+	create_huff_code(tree, n_symbols, codefinal, order);
+
 	fseek(input_file, 0L, SEEK_SET);
 	unsigned char binarybuffer[n_symbols];
 	unsigned long binarybuffersize = 0;
 
 	unsigned char *outbuffer;
-	outbuffer = malloc(length_value);
+	outbuffer = malloc(length);
 
 	//Headers of file
 	//X will be the number of bits added to create the last byte
@@ -164,7 +167,7 @@ int encode(FILE *input_file, unsigned long file_size, FILE *output_file, unsigne
 	for (i = 0; i < 8; i++)
 		fwrite(&filetype[i], 1, 1, output_file);
 
-	fwrite(&length_value, 1, 1, output_file);
+	fwrite(&length, 1, 1, output_file);
 
 	for (i = 0; i < n_symbols; i++)
 		fwrite(&order[i], sizeof(unsigned long) ,1 ,output_file);
@@ -173,42 +176,42 @@ int encode(FILE *input_file, unsigned long file_size, FILE *output_file, unsigne
 		fwrite(&tree[i], sizeof(unsigned long), 1, output_file);
 
 
-	for (i = 0; i < file_size/length_value; i++) {
-		fread(buffer, length_value, 1, input_file);
+	for (i = 0; i < file_size/length; i++) {
+		fread(buffer, length, 1, input_file);
 		current_symbol = 0;
-		for (j = 0; j < length_value; j++)
-			current_symbol += buffer[j]*pow_int(2,8*(length_value - 1 - j));
+		for (j = 0; j < length; j++)
+			current_symbol += buffer[j]*pow_int(2,8*(length - 1 - j));
 
 		for (j = 0; j < codefinal[current_symbol].length; j++)
 			binarybuffer[binarybuffersize+j] = codefinal[current_symbol].value[j];
 
 		binarybuffersize += codefinal[current_symbol].length;
 
-		while (binarybuffersize >= length_value*8){
+		while (binarybuffersize >= length*8){
 			*outbuffer = 0;
-			for (j = 0; j < length_value*8; j++)
-				*outbuffer += binarybuffer[length_value*8 - 1 - j] * pow_int(2,j);
+			for (j = 0; j < length*8; j++)
+				*outbuffer += binarybuffer[length*8 - 1 - j] * pow_int(2,j);
 
-			fwrite(outbuffer ,length_value ,1 ,output_file);
+			fwrite(outbuffer ,length ,1 ,output_file);
 
-			for (j = 0; j < binarybuffersize - length_value*8; j++)
-				binarybuffer[j] = binarybuffer[j+length_value*8];
+			for (j = 0; j < binarybuffersize - length*8; j++)
+				binarybuffer[j] = binarybuffer[j+length*8];
 
-			binarybuffersize -= length_value*8;
+			binarybuffersize -= length*8;
 		}
 	}
-	unsigned char filled = length_value*8 - binarybuffersize;
+	unsigned char filled = length*8 - binarybuffersize;
 	*outbuffer = 0;
-	for (j = 0; j < length_value*8; j++)
-		*outbuffer += binarybuffer[length_value*8 - 1 - j] * pow_int(2,j);
+	for (j = 0; j < length*8; j++)
+		*outbuffer += binarybuffer[length*8 - 1 - j] * pow_int(2,j);
 
-	fwrite(outbuffer ,length_value ,1 ,output_file);
+	fwrite(outbuffer ,length ,1 ,output_file);
 
-	fseek(output_file, 7 * length_value, SEEK_SET);
+	fseek(output_file, 7 * length, SEEK_SET);
 	fwrite(&filled, 1, 1, output_file);
 
 	free(probs);
-	free(buffer);
+	free(order);
 	free(outbuffer);
 
 	return 0;
@@ -237,11 +240,11 @@ int decode(FILE *input_file, unsigned long file_size, char *input_file_name, FIL
 	}
 	printf("- Huffman file %s is version %c%c%c\n", input_file_name, bufferheader[4], bufferheader[5], bufferheader[6]);
 
-	unsigned char length_value;
-	fread(&length_value, 1, 1, input_file);
-	printf("- Length = %u\n", length_value);
+	unsigned char length;
+	fread(&length, 1, 1, input_file);
+	printf("- Length = %u\n", length);
 
-	unsigned long n_symbols = pow_int(2,8*length_value);
+	unsigned long n_symbols = pow_int(2, 8 * length);
 	unsigned long order[n_symbols];
 	unsigned long tree[(n_symbols - 1) * 2];
 
@@ -250,43 +253,9 @@ int decode(FILE *input_file, unsigned long file_size, char *input_file_name, FIL
 	fread(order, n_symbols, sizeof(unsigned long), input_file);
 	fread(tree, (n_symbols - 1) * 2, sizeof(unsigned long), input_file);
 
-	code codeh[n_symbols*2];
-	for (i = 0; i < n_symbols; i++)
-		codeh[i].length = 0;
-
-	for (i = 0; i < n_symbols; i++)
-		codeh[i].children.length = 0;
-
-	unsigned int parent;
-	for (i = 0; i < (n_symbols - 1); i++) {
-		parent = tree[i * 2];
-		fill(0, codeh, parent);
-		parent = tree[(i * 2) +1 ];
-		fill(1, codeh, parent);
-		codeh[tree[i * 2]].children.value[codeh[tree[i * 2]].children.length] = tree[(i * 2) + 1];
-		codeh[tree[i * 2]].children.length++;
-	}
-
-	unsigned long ordercopy[n_symbols];
-	for (i = 0; i < n_symbols; i++)
-		ordercopy[i] = order[i];
-
-	unsigned long indexes[n_symbols];
-	for (i = 0; i < n_symbols; i++)
-		indexes[i] = i;
-
-	bubble_sort(ordercopy, indexes, n_symbols, -1);
-
-	code codefinalre[n_symbols];
 	code codefinal[n_symbols];
 
-	for (i = 0; i < n_symbols; i++)
-		codefinalre[i] = codeh[indexes[i]];
-	for (i = 0; i < n_symbols; i++) {
-		for (j = 0; j < codefinalre[i].length; j++)
-			codefinal[i].value[j] = codefinalre[i].value[codefinalre[i].length - 1 - j];
-		codefinal[i].length = codefinalre[i].length;
-	}
+	create_huff_code(tree, n_symbols, codefinal, order);
 
 	unsigned char buffer = 0;
 
@@ -298,15 +267,15 @@ int decode(FILE *input_file, unsigned long file_size, char *input_file_name, FIL
 	while (!feof(input_file)) {
 		while (binarybuffersize < n_symbols && !feof(input_file)) {
 			fread(&buffer, 1, 1, input_file);
-			for (j = 0; j < 8 * length_value; j++) {
-				binarybuffer[binarybuffersize - j + 8 * length_value - 1] = buffer % 2;
+			for (j = 0; j < 8 * length; j++) {
+				binarybuffer[binarybuffersize - j + 8 * length - 1] = buffer % 2;
 				buffer = buffer/2;
 			}
-			binarybuffersize += 8 * length_value;
+			binarybuffersize += 8 * length;
 		}
 
 		if (feof(input_file))
-			binarybuffersize -= filled + length_value * 8;
+			binarybuffersize -= filled + length * 8;
 
 		if (binarybuffersize > 0) {
 			for (j = 0; j < n_symbols; j++) {
@@ -316,7 +285,7 @@ int decode(FILE *input_file, unsigned long file_size, char *input_file_name, FIL
 				}
 
 				if (codefinal[j].length == k) {
-					fwrite(&j,length_value,1,output_file);
+					fwrite(&j,length,1,output_file);
 					for (k = 0; k < n_symbols * 2 - codefinal[j].length; k++)
 						binarybuffer[k] = binarybuffer[k+codefinal[j].length];
 
@@ -334,7 +303,7 @@ int decode(FILE *input_file, unsigned long file_size, char *input_file_name, FIL
 			}
 
 			if (codefinal[j].length == k) {
-				fwrite(&j,length_value,1,output_file);
+				fwrite(&j,length,1,output_file);
 				for (k = 0; k < n_symbols * 2 - codefinal[j].length; k++)
 					binarybuffer[k] = binarybuffer[k+codefinal[j].length];
 
@@ -348,7 +317,7 @@ int decode(FILE *input_file, unsigned long file_size, char *input_file_name, FIL
 return 0;
 }
 
-int process_command(char command, char *input_file_name, char *output_file_name, unsigned int length_value)
+int process_command(char command, char *input_file_name, char *output_file_name, unsigned int length)
 {
 	printf("- Opening file %s\n", input_file_name);
 	FILE *input_file = fopen(input_file_name,"rb");
@@ -368,7 +337,7 @@ int process_command(char command, char *input_file_name, char *output_file_name,
 	case 'e':
 		printf(">>> Encoding\n");
 		printf("- File size: %lu bytes\n", file_size);
-		encode(input_file, file_size, output_file, length_value);
+		encode(input_file, file_size, output_file, length);
 
 		unsigned long file_sizecomp = get_file_size(output_file_name);
 		printf("- Compressed file size: %lu bytes\n", file_sizecomp);
@@ -392,7 +361,7 @@ int main(int argc, char **argv)
 	char command = 'n';
 	char help_flag = 0;
 	char non_option_flag = 0;
-	unsigned int length_value = 1;
+	unsigned int length = 1;
 	char *input_file_name = NULL;
 	char *output_file_name = NULL;
 	int i, c;
@@ -411,8 +380,8 @@ int main(int argc, char **argv)
 			help_flag = 1;
 			break;
 		case 'l':
-			length_value = *optarg - 48;
-			printf("Length = %i\n",length_value);
+			length = *optarg - 48;
+			printf("Length = %i\n",length);
 			break;
 		case 'i':
 			input_file_name = optarg;
@@ -453,11 +422,11 @@ int main(int argc, char **argv)
 		else if (!output_file_name)
 			printf("You need to specify an output file\n");
 
-		else if (length_value < 1)
+		else if (length < 1)
 			printf("You need to specify a positive length\n");
 
 		else
-			process_command(command, input_file_name, output_file_name, length_value);
+			process_command(command, input_file_name, output_file_name, length);
 
 	}
 	return 0;

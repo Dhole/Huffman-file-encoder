@@ -14,7 +14,7 @@
 
 #include "huffman_functions.h"
 
-unsigned long pow_int(int base, int exp)
+unsigned long pow_int(unsigned long base, unsigned long exp)
 {
 	int res = 1;
 	for (; exp > 0; exp--)
